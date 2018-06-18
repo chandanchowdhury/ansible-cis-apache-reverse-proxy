@@ -1,0 +1,19 @@
+---
+
+- name: 6.1 Configure the LogLevel
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^LogLevel '
+    line: 'LogLevel notice core:info'
+    state: present
+  tags:
+    - "6.1"
+
+- name: 6.2 Configure the ErrorLog
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^ErrorLog '
+    line: 'ErrorLog "logs/error_log"'
+    state: present
+  tags:
+    - "6.1"
