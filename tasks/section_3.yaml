@@ -2,54 +2,136 @@
 
 - name: 3.1 ensure apache web server run as non-root user
   lineinfile: 
-    path: /etc/httpd/conf/httpd.conf
+    path: "{{ apache_path }}/conf/httpd.conf"
     regexp: '^User '
     line: 'User apache'
+  tags:
+    - "3.1"
   
 - name: 3.1 ensure apache web server run as non-root user
   lineinfile: 
-    path: /etc/httpd/conf/httpd.conf
+    path: "{{ apache_path }}/conf/httpd.conf"
     regexp: '^Group '
     line: 'Group apache'
+  tags:
+    - "3.1"
 
 - name: 3.2 ensure apache user has an invalid shell (nologin)
   user:
     name: apache
     shell: nologin
-
+  tags:
+    - "3.2"
+  
 # User module doesn't support locking
 # using command instead
 - name: 3.3 ensure apache user is locked
   command: passwd -l apache 
+  tags:
+    - "3.3"
 
-- name: 3.4-3.5 ensure apache directories are owned by root
-  command: "chown -R root:root {{ apache_path }}"
+#- name: 3.4-3.5 ensure apache directories are owned by root
+#  command: "chown -R root:root {{ apache_path }}"
 
-- name: 3.6 restrict write access on apache directories and files
-  command: "chmod -R o-w {{ apache_path }}" 
+- name: 3.4 - 3.6 apache directories and files are owned by root:root and not writable by others
+  file:
+    dest: "{{ apache_path }}"
+    owner: root
+    group: root
+    mode: 0775
+    recurse: yes
+  tags:
+    - "3.4"
+    - "3.5"
+    - "3.6"
+    - scored    
 
-- name: 3.7 ensure secure core dump directory is /var/log/httpd/
+- name: 3.7 Find the core dump directory
   lineinfile:
-    path: /etc/httpd/conf/httpd.conf
-    regexp: '^ CoreDumpDirectory'
-
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^CoreDumpDirectory '
+  register: coredump_result
+  # Ignore if "CoreDumpDirectory" is not found in config file
+  ignore_errors: true
+  tags:
+    - "3.7"
+    
+- name: 3.7 ensure secure core dump directory is secure
+  debug: 
+    msg: TBD - Find and fix permission
+  when: coredump_result is succeeded
+  tags:
+    - "3.7"
+    
+- name: 3.8 Verify the configuration does NOT include a Mutex
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^Mutex '
+  register: mutex_result
+  # Ignore if "Mutex" is not found in config file
+  ignore_errors: true
+  
+  tags:
+    - "3.8"
+     
 - name: 3.8 ensure the lock file is secure
   debug: 
-    msg: TBD
+    msg: TBD - Find and fix permission of the Mutex file
+  when: mutex_result is succeeded
+  tags:
+    - "3.8"
 
-- name: 3.9 ensure pid file is secured
-  debug:
-    msg: TBD 
+- name: 3.9 Find the PidFile 
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^PidFile '
+  register: pid_result
+  ignore_errors: true
+  tags:
+    - "3.9"
 
+- name: 3.9 ensure the lock file is secure
+  debug: 
+    msg: TBD - Find and fix permission of the Mutex file
+  when: pid_result is succeeded
+  tags:
+    - "3.9"
+    
 - name: 3.10 ensure secure board file is not within apache DocumentRoot
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    regexp: '^ScoreBoardFile '
+  # Ignore if "Mutex" is not found in config file
+  ignore_errors: true
+  tags:
+    - "3.10"
+    - scored
 
 - name: 3.10 ensure SecureBoard file is non writable
   debug:
     msg: TBD, check if present, if so take action
 
 - name: 3.11 Restrict Group Write access for the Apache directories and Files
-  command: "chmod -R g-w {{ apache_path }}"
+  #command: "chmod -R g-w {{ apache_path }}"
+  file:
+    dest: "{{ apache_path }}"
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  tags:
+    - "3.11"
+    - scored  
 
 - name: 3.12 Restrict Group Write Access for the Document Root Directories and Files
-  command: "find -L {{ apache_path }} -group apache -perm /g=w -print | xargs chmod g-w"
+  #command: "find -L {{ apache_path }} -group apache -perm /g=w -print | xargs chmod g-w"
+  file:
+    dest: "{{ document_root }}"
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  tags:
+    - "3.12"
+    - scored  
 
