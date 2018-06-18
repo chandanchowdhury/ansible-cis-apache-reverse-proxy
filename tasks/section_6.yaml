@@ -1,2 +1,5 @@
 - include: 6.1.yaml
-  tags: logging, monitoring
+  tags: logging, monitoring, level-1
+  
+- include: 6.2.yaml
+  tags: logging, monitoring, level-2, scored

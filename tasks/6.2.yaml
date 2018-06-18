@@ -1,0 +1,10 @@
+---
+
+- name: 6.2 Configure a Syslog Facility for Error Logging
+  lineinfile: 
+    path: "{{ apache_path }}/conf/httpd.conf"
+    line: "ErrorLog syslog:{{ cis_syslog_facilty  }}"
+    state: present
+  tags:
+    - "6.2"
+
