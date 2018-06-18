@@ -1,0 +1,40 @@
+---
+
+# 2.1 Enable Only Necessary Authentication and Authorization Modules
+
+### NOTE: Does not work on Amazon linux
+# Ref: https://github.com/ansible/ansible/blob/stable-2.5/lib/ansible/modules/web_infrastructure/apache2_module.py
+# - name: 2.1 Make sure no ther authentication module is active
+  # apache2_module:
+    # name: "{{ item }}"
+    # state: present
+    # force: true
+  # with_items:
+    # - "{{ cis_authentication_modules }}"
+  # tags:
+    # - "level-1"
+    # - "section-2"  
+    # - "2.1"
+    
+- name: 2.1 Make sure all required authentication modules active
+  shell: "httpd -M| egrep {{ item }}"
+  with_items: 
+    - "{{ cis_authentication_modules }}"
+  register: command_status
+  failed_when: command_status.rc != 0
+  tags:
+    - "level-1"
+    - "section-2"  
+    - "2.1"
+    
+- name: 2.1 Make sure all authorization modules are active
+  shell: "httpd -M| egrep {{ item }}"
+  with_items: 
+    - "{{ cis_authorization_modules }}"
+  register: command_status
+  failed_when: command_status.rc != 0
+  tags:
+    - "level-1"
+    - "section-2"  
+    - "2.1"
+    
